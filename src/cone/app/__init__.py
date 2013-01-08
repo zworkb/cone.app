@@ -20,59 +20,65 @@ from .browser import (
 from yafowil.base import factory
 from yafowil.utils import get_plugin_names
 
+
 logger = logging.getLogger('cone.app')
+
 
 # configuration
 cfg = Properties()
-
 # authentication provider (expect ``node.ext.ugm.Ugm`` API)
 cfg.auth = None
-
 # used main template
 cfg.main_template = 'cone.app.browser:templates/main.pt'
-
 # default node icon
 cfg.default_node_icon = 'static/images/default_node_icon.png'
 
+
 # JS resources
 cfg.js = Properties()
-cfg.js.public = [
+cfg.js.core = [
     '++resource++bdajax/bdajax.js',
 ]
-cfg.js.protected = list()
-
-# CSS Resources
-cfg.css = Properties()
-cfg.css.public = [
-    'static/cdn/jquery-ui-1.8.18.css',
-    '++resource++bdajax/bdajax.css',
-]
-cfg.css.protected = list()
-
-# JS and CSS Assets to publish merged
-cfg.merged = Properties()
-cfg.merged.js = Properties()
-cfg.merged.js.public = [
+cfg.js.core_merged = list()
+cfg.js.public = list()
+cfg.js.public_merged = [
     (static_resources, 'cdn/jquery1.6.4.min.js'),
     (static_resources, 'cdn/jquery.tools.min.js'),
     (static_resources, 'cdn/jquery-ui-1.8.18.min.js'),
 ]
-cfg.merged.js.protected = [
+cfg.js.protected = list()
+cfg.js.protected_merged = [
     (static_resources, 'cookie_functions.js'),
     (static_resources, 'cone.app.js'),
 ]
 
-cfg.merged.css = Properties()
-cfg.merged.css.public = [
+
+# CSS resources
+cfg.css = Properties()
+# core CSS
+cfg.css.core = [
+    'static/cdn/jquery-ui-1.8.18.css',
+    '++resource++bdajax/bdajax.css',
+]
+# merged core CSS
+cfg.css.core_merged = list()
+# public CSS
+cfg.css.public = list()
+# merged public CSS
+cfg.css.public_merged = [
     (static_resources, 'style.css'),
 ]
-cfg.merged.css.protected = list()
-
-cfg.merged.print_css = Properties()
-cfg.merged.print_css.public = [
+# public print CSS
+cfg.css.public_print = [
     (static_resources, 'print.css'),
 ]
-cfg.merged.print_css.protected = list()
+# protected CSS
+cfg.css.protected = list()
+# merged protected CSS
+cfg.css.protected_merged = list()
+# protected print CSS
+cfg.css.protected_print = list()
+
 
 # cfg.layout used to enable/disable tiles in main template
 cfg.layout = Properties()
@@ -82,6 +88,8 @@ cfg.layout.mainmenu = True
 cfg.layout.pathbar = True
 cfg.layout.sidebar_left = ['navtree']
 
+
+# root factories
 root = AppRoot()
 root.factories['settings'] = AppSettings
 
@@ -134,6 +142,18 @@ def acl_factory(**kwargs):
     return ACLAuthorizationPolicy()
 
 
+# yafowil specific configuration
+cfg.yafowil = Properties()
+# yafowil addon javascript
+cfg.yafowil.js = list()
+# yafowil js groups to skip
+cfg.yafowil.js_skip = set()
+# yafowil addon CSS
+cfg.yafowil.css = list()
+# yafowil css groups to skip
+cfg.yafowil.css_skip = set()
+
+
 def configure_yafowil_addon_resources(config):
     import cone.app
     all_js = list()
@@ -150,20 +170,23 @@ def configure_yafowil_addon_resources(config):
         resource_name = '++resource++%s' % plugin_name
         config.add_view(view_path, name=resource_name)
         for js in resources['js']:
+            if js['group'] in cone.app.cfg.yafowil.js_skip:
+                continue
             if not js['resource'].startswith('http'):
                 js['resource'] = resource_name + '/' + js['resource']
             all_js.append(js)
         for css in resources['css']:
+            if css['group'] in cone.app.cfg.yafowil.css_skip:
+                continue
             if not css['resource'].startswith('http'):
                 css['resource'] = resource_name + '/' + css['resource']
             all_css.append(css)
     all_js = sorted(all_js, key=lambda x: x['order'])
     all_css = sorted(all_css, key=lambda x: x['order'])
     for js in all_js:
-        cone.app.cfg.js.protected.append(js['resource'])
-        #cone.app.cfg.merged.js.protected.append(js['resource'])
+        cone.app.cfg.yafowil.js.append(js['resource'])
     for css in all_css:
-        cone.app.cfg.css.protected.append(css['resource'])
+        cone.app.cfg.yafowil.css.append(css['resource'])
 
 
 def main(global_config, **settings):

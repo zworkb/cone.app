@@ -13,18 +13,14 @@ from cone.tile import (
 from cone.app.utils import app_config
 
 
-class MergedAssets(object):
+class MergedResources(object):
 
     def __init__(self, request):
         self.request = request
 
-    def merged_assets(self, assets):
-        if authenticated_userid(self.request):
-            assets = assets.public + assets.protected
-        else:
-            assets = assets.public
+    def merged_resources(self, resources):
         data = ''
-        for view, subpath in assets:
+        for view, subpath in resources:
             if isinstance(view.app, PackageURLParser):
                 path = pkg_resources.resource_filename(
                     view.app.package_name,
@@ -32,42 +28,45 @@ class MergedAssets(object):
             elif isinstance(view.app, StaticURLParser):
                 path = os.path.join(view.app.directory, subpath)
             else:
-                raise ValueError(u"Unknown assets view app %s" % str(view.app))
+                raise ValueError(
+                    u"Unknown resources view app %s" % str(view.app))
             with open(path, 'r') as file:
                 data += file.read() + '\n\n'
         return data
 
-    @property
-    def merged_js(self):
-        return self.merged_assets(cone.app.cfg.merged.js)
-
-    @property
-    def merged_css(self):
-        return self.merged_assets(cone.app.cfg.merged.css)
-
-    @property
-    def merged_print_css(self):
-        return self.merged_assets(cone.app.cfg.merged.print_css)
-
 
 @view_config('cone.js')
 def cone_js(model, request):
-    assets = MergedAssets(request)
-    return Response(assets.merged_js)
+    resources = MergedResources(request)
+    cfg = app_config()
+    data = resources.merged_resources(cfg.js.core_merged)
+    data += resources.merged_resources(cfg.js.public_merged)
+    if authenticated_userid(request):
+        data += resources.merged_resources(cfg.js.protected_merged)
+    return Response(data)
 
 
 @view_config('cone.css')
 def cone_css(model, request):
-    assets = MergedAssets(request)
-    response = Response(assets.merged_css)
+    resources = MergedResources(request)
+    cfg = app_config()
+    data = resources.merged_resources(cfg.css.core_merged)
+    data += resources.merged_resources(cfg.css.public_merged)
+    if authenticated_userid(request):
+        data += resources.merged_resources(cfg.css.protected_merged)
+    response = Response(data)
     response.headers['Content-Type'] = 'text/css'
     return response
 
 
 @view_config('print.css')
 def print_css(model, request):
-    assets = MergedAssets(request)
-    response = Response(assets.merged_print_css)
+    resources = MergedResources(request)
+    cfg = app_config()
+    data = resources.merged_resources(cfg.css.public_print)
+    if authenticated_userid(request):
+        data += resources.merged_resources(cfg.css.protected_print)
+    response = Response(data)
     response.headers['Content-Type'] = 'text/css'
     return response
 
@@ -75,9 +74,6 @@ def print_css(model, request):
 @tile('resources', 'templates/resources.pt', permission='login')
 class Resources(Tile):
     """Resources tile.
-
-    XXX: either switch to resource management lib here or use resource
-         management middleware.
     """
 
     @property
@@ -85,21 +81,8 @@ class Resources(Tile):
         return authenticated_userid(self.request)
 
     @property
-    def js(self):
-        return self.resources(app_config().js)
-
-    @property
-    def css(self):
-        return self.resources(app_config().css)
-
-    def resources(self, reg):
-        ret = list()
-        for res in reg['public']:
-            ret.append(self.resource_url(res))
-        if self.authenticated:
-            for res in reg['protected']:
-                ret.append(self.resource_url(res))
-        return ret
+    def cfg(self):
+        return app_config()
 
     def resource_url(self, resource):
         if resource.startswith('http'):

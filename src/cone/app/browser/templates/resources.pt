@@ -1,21 +1,41 @@
 <tal:resources xmlns:tal="http://xml.zope.org/namespaces/tal"
-               define="js context.js;
-                       css context.css;">
+               tal:define="cfg context.cfg">
 
   <!-- javascripts -->
   <script src="${request.application_url}/cone.js"></script>
-  <tal:public repeat="res js">
-    <script src="${res}"></script>
+  <tal:core repeat="js cfg.js.core">
+    <script src="${context.resource_url(js)}"></script>
+  </tal:core>
+  <tal:yafowil repeat="js cfg.yafowil.js">
+    <script src="${context.resource_url(js)}"></script>
+  </tal:yafowil>
+  <tal:public repeat="js cfg.js.public">
+    <script src="${context.resource_url(js})"></script>
   </tal:public>
+  <tal:protected repeat="js cfg.js.protected">
+    <script src="${context.resource_url(js})"></script>
+  </tal:protected>
 
   <!-- stylesheets -->
   <link href="${request.application_url}/cone.css"
         rel="stylesheet" type="text/css" media="all" />
   <link href="${request.application_url}/print.css"
         rel="stylesheet" type="text/css" media="print" />
-  <tal:public repeat="res css">
-    <link href="${res}"
-          rel="stylesheet" type="text/css" media="all" />
+  <tal:core repeat="css cfg.css.core">
+    <link href="${context.resource_url(css)}" rel="stylesheet"
+          type="text/css" media="all" />
+  </tal:core>
+  <tal:yafowil repeat="css cfg.yafowil.css">
+    <link href="${context.resource_url(css)}" rel="stylesheet"
+          type="text/css" media="all" />
+  </tal:yafowil>
+  <tal:public repeat="css cfg.css.public">
+    <link href="${context.resource_url(css)}" rel="stylesheet"
+          type="text/css" media="all" />
   </tal:public>
+  <tal:protected repeat="css cfg.css.protected">
+    <link href="${context.resource_url(css)}" rel="stylesheet"
+          type="text/css" media="all" />
+  </tal:protected>
 
 </tal:resources>
