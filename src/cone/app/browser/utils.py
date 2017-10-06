@@ -56,10 +56,14 @@ def make_url(request, path=None, node=None, resource=None, query=None):
         path = node_path(node)
     if resource is not None:
         path.append(resource)
+    # XXX: quote / inside path element
+    #      related: cone.tile.Tile.nodeurl
     path = [urllib2.quote(safe_encode(it)) for it in path]
     url = '{}/{}'.format(request.application_url, '/'.join(path))
     if not query:
         return url
+    # XXX: quote whole URL
+    urllib2.quote(safe_encode(query))
     return '{}{}'.format(url, query)
 
 

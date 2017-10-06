@@ -5,6 +5,7 @@ from cone.app.model import AppRoot
 from cone.app.model import AppSettings
 from cone.app.model import Layout
 from cone.app.model import Properties
+from cone.app.traversal import NodeTraverser
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.config import Configurator
@@ -280,6 +281,9 @@ def main(global_config, **settings):
 
     config.include(pyramid_zcml)
     config.begin()
+
+    # add cone traverser
+    config.registry.registerAdapter(NodeTraverser)
 
     # default layout adapter
     config.registry.registerAdapter(default_layout)
