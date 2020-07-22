@@ -1,15 +1,15 @@
 from cone.app import compat
-from cone.app.browser.ajax import AjaxAction
-from cone.app.browser.ajax import AjaxEvent
 from cone.app.browser.ajax import ajax_continue
 from cone.app.browser.ajax import ajax_message
+from cone.app.browser.ajax import AjaxEvent
 from cone.app.browser.utils import choose_name
+from cone.app.browser.utils import make_query
 from cone.app.browser.utils import make_url
 from cone.tile import Tile
 from cone.tile import tile
 from node.utils import LocationIterator
-from pyramid.i18n import TranslationStringFactory
 from pyramid.i18n import get_localizer
+from pyramid.i18n import TranslationStringFactory
 
 
 _ = TranslationStringFactory('cone.app')
@@ -141,11 +141,13 @@ class PasteAction(Tile):
             failed = "<br /><strong>%s</strong>" % failed
             message += "<br />".join([failed] + errors)
         ajax_message(self.request, message)
-        url = make_url(self.request, node=self.model)
-        action = AjaxAction(url, 'content', 'inner', '#content')
-        event = AjaxEvent(url, 'contextchanged', '.contextsensitiv')
-        continuation = [action, event]
-        ajax_continue(self.request, continuation)
+        content_tile = self.model.properties.action_paste_tile
+        if not content_tile:
+            content_tile = 'listing'
+        query = make_query(contenttile=content_tile)
+        url = make_url(self.request, node=self.model, query=query)
+        event = AjaxEvent(url, 'contextchanged', '#layout')
+        ajax_continue(self.request, event)
         res = self.request.response
         res.delete_cookie(cookie_name(copy and 'copy' or 'cut'))
         return u''

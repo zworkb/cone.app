@@ -15,7 +15,7 @@ Workflows are described in ZCML files.
 ``repoze.workflow`` is wired to ``cone.app`` as follows:
 
 - The ``content_types`` attribute in the ``workflow`` directive contains the
-  nodes this workflow can be used for.
+  node classes or interfaces this workflow can be used for.
 
 - The ``permission_checker`` attribute in the ``workflow`` directive points
   to ``cone.app.workflow.permission_checker``, which is used to check whether
@@ -41,7 +41,8 @@ A typical publication workflow would end up in a file named
                 state_attr="state"
                 initial_state="draft"
                 content_types="cone.example.model.ExampleNode
-                               cone.example.model.AnotherNode"
+                               cone.example.model.AnotherNode
+                               cone.example.interfaces.INodeInterface"
                 permission_checker="cone.app.workflow.permission_checker">
 
         <state name="draft"
@@ -151,7 +152,7 @@ A model node plumbed by ``WorkflowState`` must provide the name of the workflow
 it uses at ``workflow_name`` which refers to the ``type`` attribute of the
 ``workflow`` directive in the workflow ZCML file.
 
-A translation string factory can be provided via ``workflow_tsf`` property in
+A translation string factory can be provided via ``workflow_tsf`` attribute in
 order to provide translations for the workflow.
 
 
@@ -223,9 +224,14 @@ An implementation integrating the publication workflow as described in
     class ExampleNode(BaseNode):
         """Application model node using the publication workflow.
         """
-        # workflow registration name
+        # Workflow registration name
         workflow_name = 'publication'
-        # translation string factory used to translate workflow
-        workflow_tsf = _
-        # workflow state specific ACL's
+
+        # Translation string factory used to translate workflow state and
+        # transition names. Note! The translation string factory is unbound, so
+        # we need to set it as staticmethod. Otherwise the node instance would
+        # be passed to the factory as first argument instead of the message ID.
+        workflow_tsf = staticmethod(_)
+
+        # Workflow state specific ACL's
         state_acls = publication_state_acls

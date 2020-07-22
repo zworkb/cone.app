@@ -17,32 +17,31 @@ Docs
 
 [ ] Proper cross linking all over the place
 
+[ ] Add proper API docs to code and include in docs.
+
 
 Roadmap
 =======
 
-1.0b1
------
-
-[X] Migrate Doctests to Unittests.
-
-[X] Merge ``pyramid_upgrade`` branches back to master.
-
-[X] Python 3 support.
-
-[X] Adopt docs for using ``waitress`` instead of ``paster``.
-
-[X] Adopt docs and remove buildout section.
-
 1.0
 ---
 
+[ ] Check ``title`` of transition names before using ``name`` in workflow
+    dropdown.
+
+[ ] Change overlay forms selector to use dedicated overlay.
+
 [ ] Bind sharing view to ``cone.app.interfaces.IPrincipalACL``.
 
-[ ] Add proper API docs to code and include in docs.
+[ ] Fix ACL registry lookup. First check by cls and node info name, then by
+    class only and finally return default.
 
 1.1
 ---
+
+[ ] CopySupport is used both for marking containers supporting cut/copy/paste
+    and objects being copyable. Make dedicated interface/mechanism for marking
+    objects copyable.
 
 [ ] Add template for creating ``cone.app`` plugins.
 
@@ -94,7 +93,9 @@ options and datasets instead of just datasets.
 
 [ ] Sharing tile table sorting by principal title instead of principal id
 
-2.0
+[ ] Bind navtree to ``list`` permission?
+
+1.2
 ---
 
 [ ] Update jQuery.

@@ -20,19 +20,11 @@ if (typeof(window['yafowil']) == "undefined") yafowil = {};
         bdajax.register(cone.batcheditemsbinder.bind(cone), true);
         bdajax.register(cone.tabletoolbarbinder.bind(cone), true);
         bdajax.register(cone.sharingbinder.bind(cone), true);
-        bdajax.register(cone.selectable.binder.bind(cone.selectable), true);
         bdajax.register(cone.copysupportbinder.bind(cone), true);
-        var referencebrowser = yafowil.referencebrowser;
-        bdajax.register(
-            referencebrowser.browser_binder.bind(referencebrowser),
-            true
-        );
-        bdajax.register(
-            referencebrowser.add_reference_binder.bind(referencebrowser)
-        );
-        bdajax.register(
-            referencebrowser.remove_reference_binder.bind(referencebrowser)
-        );
+        var refbrowser = yafowil.referencebrowser;
+        bdajax.register(refbrowser.browser_binder.bind(refbrowser), true);
+        bdajax.register(refbrowser.add_reference_binder.bind(refbrowser));
+        bdajax.register(refbrowser.remove_reference_binder.bind(refbrowser));
     });
 
     cone = {
@@ -209,193 +201,251 @@ if (typeof(window['yafowil']) == "undefined") yafowil = {};
         },
 
         copysupportbinder: function(context) {
-            var cut_cookie = 'cone.app.copysupport.cut';
-            var copy_cookie = 'cone.app.copysupport.copy';
-            var write_selected_to_cookie = function(name) {
-                var selected = $(cone.selectable.selected);
-                var ids = new Array();
-                selected.each(function() {
-                    ids.push($(this).attr('ajax:target'));
-                });
-                var cookie = ids.join('::');
-                createCookie(name, cookie);
-                if (cookie.length) {
-                    return true;
-                }
-                return false;
-            };
-            $('a#toolbaraction-cut', context)
-                    .off('click')
-                    .on('click', function(event) {
-                event.preventDefault();
-                createCookie(copy_cookie, '', 0);
-                var selected_exist = 
-                    write_selected_to_cookie(cut_cookie);
-                if (selected_exist) {
-                    $('a#toolbaraction-paste').removeClass('disabled');
-                }
-                var selectable = $('.selectable');
-                selectable.removeClass('copysupport_cut');
-                var selected = $(cone.selectable.selected);
-                selected.each(function() {
-                    elem = $(this);
-                    elem.addClass('copysupport_cut');
-                });
-                cone.selectable.reset();
+            new cone.CopySupport(context);
+        }
+    };
+
+    cone.CopySupport = function(context) {
+        this.context = context;
+        this.copyable = $('table tr.selectable.copysupportitem', context);
+        if (!this.copyable.length) {
+            return;
+        }
+
+        this.cut_action = $('a#toolbaraction-cut', context);
+        this.copy_action = $('a#toolbaraction-copy', context);
+        this.paste_action = $('a#toolbaraction-paste', context);
+
+        this.cut_action.off('click').on('click', this.handle_cut.bind(this));
+        this.copy_action.off('click').on('click', this.handle_copy.bind(this));
+        this.paste_action.off('click').on('click', this.handle_paste.bind(this));
+
+        this.selectable = this.copyable.selectable({
+            on_firstclick: this.on_firstclick.bind(this),
+            on_select: this.on_select.bind(this)
+        }).data('selectable');
+
+        this.read_selected_from_cookie(this.cut_cookie, 'copysupport_cut');
+        this.read_selected_from_cookie(this.copy_cookie, '');
+    };
+
+    cone.CopySupport.prototype = {
+        cut_cookie: 'cone.app.copysupport.cut',
+        copy_cookie: 'cone.app.copysupport.copy',
+
+        on_firstclick: function(selectable, elem) {
+        },
+
+        on_select: function(selectable) {
+        },
+
+        write_selected_to_cookie: function(name) {
+            var selected = $(this.selectable.selected);
+            var ids = new Array();
+            selected.each(function() {
+                ids.push($(this).attr('ajax:target'));
             });
-            $('a#toolbaraction-copy', context)
-                    .off('click')
-                    .on('click', function(event) {
-                event.preventDefault();
-                createCookie(cut_cookie, '', 0);
-                var selected_exist = 
-                    write_selected_to_cookie(copy_cookie);
-                if (selected_exist) {
-                    $('a#toolbaraction-paste').removeClass('disabled');
+            var cookie = ids.join('::');
+            createCookie(name, cookie);
+            if (cookie.length) {
+                $(this.paste_action).removeClass('disabled');
+            } else {
+                $(this.paste_action).addClass('disabled');
+            }
+        },
+
+        read_selected_from_cookie: function(name, css) {
+            var cookie = readCookie(name);
+            if (!cookie) {
+                return;
+            }
+            var ids = cookie.split('::');
+            var that = this;
+            var elem, target;
+            $('table tr.selectable', this.context).each(function() {
+                elem = $(this);
+                target = elem.attr('ajax:target');
+                for (var idx in ids) {
+                    if (ids[idx] == target) {
+                        elem.addClass('selected');
+                        if (css) {
+                            elem.addClass(css);
+                        }
+                        that.selectable.add(elem.get(0));
+                        break;
+                    }
                 }
-                var selectable = $('.selectable');
-                selectable.removeClass('copysupport_cut');
-                cone.selectable.reset();
             });
-            $('a#toolbaraction-paste', context)
-                    .off('click')
-                    .on('click', function(event) {
-                event.preventDefault();
-                var elem = $(this);
-                if (elem.hasClass('disabled')) {
-                    return;
-                }
-                var target = bdajax.parsetarget(elem.attr('ajax:target'));
-                bdajax.action({
-                    name: 'paste',
-                    mode: 'NONE',
-                    selector: 'NONE',
-                    url: target.url,
-                    params: target.params
-                });
+        },
+
+        handle_cut: function(event) {
+            event.preventDefault();
+            createCookie(this.copy_cookie, '', 0);
+            this.write_selected_to_cookie(this.cut_cookie);
+            this.copyable.removeClass('copysupport_cut');
+            $(this.selectable.selected).addClass('copysupport_cut');
+        },
+
+        handle_copy: function(event) {
+            event.preventDefault();
+            createCookie(this.cut_cookie, '', 0);
+            this.write_selected_to_cookie(this.copy_cookie);
+            this.copyable.removeClass('copysupport_cut');
+        },
+
+        handle_paste: function(event) {
+            event.preventDefault();
+            var elem = $(event.currentTarget);
+            if (elem.hasClass('disabled')) {
+                return;
+            }
+            var target = bdajax.parsetarget(elem.attr('ajax:target'));
+            bdajax.action({
+                name: 'paste',
+                mode: 'NONE',
+                selector: 'NONE',
+                url: target.url,
+                params: target.params
             });
         }
-    }
+    };
 
-    // Selectable items
-    $.fn.selectable = function() {
-        this.off('click').on('click', function(event) {
-            event.preventDefault();
-            $(document).off('mousedown').on('mousedown', function(event) {
-                var elem = $(event.target);
-                // XXX: currently static selector
-                if (elem.parents('.selectable').length) {
-                    return true;
-                }
-                $('.selectable').removeClass('selected');
-                $(document).off('mousedown');
-                return false;
+    cone.Selectable = function(options) {
+        // on_firstclick, on_select callbacks in options
+        this.options = options;
+        this.selected = [];
+        this.select_direction = 0;
+        this.firstclick = true;
+    };
+
+    cone.Selectable.prototype = {
+        reset: function() {
+            this.selected = [];
+        },
+
+        add: function(elem) {
+            this.remove(elem);
+            this.selected.push(elem);
+        },
+
+        remove: function(elem) {
+            var reduced = $.grep(this.selected, function(item, index) {
+                return item !== elem;
             });
+            this.selected = reduced;
+        },
+
+        select_no_key: function(container, elem) {
+            container.children().removeClass('selected');
+            elem.addClass('selected');
+            this.reset();
+            this.add(elem.get(0));
+        },
+
+        select_ctrl_down: function(elem) {
+            elem.toggleClass('selected');
+            if (elem.hasClass('selected')) {
+                this.add(elem.get(0));
+            } else {
+                this.remove(elem.get(0));
+            }
+        },
+
+        get_nearest: function(container, current_index) {
+            // get nearest next selected item from current index
+            var selected = container.children('.selected');
+            // -1 means no other selected item
+            var nearest = -1;
+            var selected_index, selected_elem;
+            $(selected).each(function() {
+                selected_elem = $(this);
+                selected_index = selected_elem.index();
+                if (nearest == -1) {
+                    nearest = selected_index;
+                } else if (current_index > selected_index) {
+                    if (this.select_direction > 0) {
+                        if (selected_index < nearest) {
+                            nearest = selected_index;
+                        }
+                    } else {
+                        if (selected_index > nearest) {
+                            nearest = selected_index;
+                        }
+                    }
+                } else if (current_index < selected_index) {
+                    if (selected_index < nearest) {
+                        nearest = selected_index;
+                    }
+                }
+            });
+            return nearest;
+        },
+
+        select_shift_down: function(container, elem) {
+            var current_index = elem.index();
+            var nearest = this.get_nearest(container, current_index);
+            if (nearest == -1) {
+                elem.addClass('selected');
+                this.add(elem.get(0));
+            } else {
+                container.children().removeClass('selected');
+                var start, end;
+                if (current_index < nearest) {
+                    this.select_direction = -1;
+                    start = current_index;
+                    end = nearest;
+                } else {
+                    this.select_direction = 1;
+                    start = nearest;
+                    end = current_index;
+                }
+                this.reset();
+                var that = this;
+                container.children()
+                         .slice(start, end + 1)
+                         .addClass('selected')
+                         .each(function() {
+                             that.add(this);
+                         });
+            }
+        },
+
+        handle_click: function(event) {
+            event.preventDefault();
             var elem = $(event.currentTarget);
             var container = elem.parent();
             if (!cone.keys.ctrl_down && !cone.keys.shift_down) {
-                container.children().removeClass('selected');
-                elem.addClass('selected');
-                cone.selectable.reset();
-                cone.selectable.add(event.currentTarget);
-            } else {
-                if (cone.keys.ctrl_down) {
-                    elem.toggleClass('selected');
-                    if (elem.hasClass('selected')) {
-                        cone.selectable.add(event.currentTarget);
-                    } else {
-                        cone.selectable.remove(event.currentTarget);
-                    }
-                }
-                if (cone.keys.shift_down) {
-                    var selected = container.children('.selected');
-                    // get nearest next selected item, disable others
-                    var current_index = elem.index();
-                    // -1 means no other selected item
-                    var nearest = -1;
-                    var selected_index, selected_elem;
-                    $(selected).each(function() {
-                        selected_elem = $(this);
-                        selected_index = selected_elem.index();
-                        if (nearest == -1) {
-                            nearest = selected_index;
-                        } else if (current_index > selected_index) {
-                            if (cone.flags.select_direction > 0) {
-                                if (selected_index < nearest) {
-                                    nearest = selected_index;
-                                }
-                            } else {
-                                if (selected_index > nearest) {
-                                    nearest = selected_index;
-                                }
-                            }
-                        } else if (current_index < selected_index) {
-                            if (selected_index < nearest) {
-                                nearest = selected_index;
-                            }
-                        }
-                    });
-                    if (nearest == -1) {
-                        elem.addClass('selected');
-                        cone.selectable.add(event.currentTarget);
-                    } else {
-                        container.children().removeClass('selected');
-                        var start, end;
-                        if (current_index < nearest) {
-                            cone.flags.select_direction = -1;
-                            start = current_index;
-                            end = nearest;
-                        } else {
-                            cone.flags.select_direction = 1;
-                            start = nearest;
-                            end = current_index;
-                        }
-                        cone.selectable.reset();
-                        container.children()
-                                 .slice(start, end + 1)
-                                 .addClass('selected')
-                                 .each(function() {
-                                     cone.selectable.add(this);
-                                 });
-                    }
-                }
+                this.select_no_key(container, elem);
+            } else if (cone.keys.ctrl_down) {
+                this.select_ctrl_down(elem);
+            } else if (cone.keys.shift_down) {
+                this.select_shift_down(container, elem);
             }
-        });
-        return this;
-    }
-
-    $.extend(cone, {
-
-        selectable: {
-
-            // current selected dom elements
-            selected: [],
-
-            // reset
-            reset: function() {
-                cone.selectable.selected = [];
-            },
-
-            // add element to selected
-            add: function(elem) {
-                cone.selectable.remove(elem);
-                cone.selectable.selected.push(elem);
-            },
-
-            // remove element from selected
-            remove: function(elem) {
-                var reduced = $.grep(cone.selectable.selected,
-                                     function(item, index) {
-                    return item !== elem;
-                });
-                cone.selectable.selected = reduced;
-            },
-
-            binder: function(context) {
-                $('table tr.selectable', context).selectable();
+            if (this.firstclick) {
+                this.firstclick = false;
+                this.notify('on_firstclick', this, elem);
             }
+            this.notify('on_select', this);
+        },
+
+        notify: function(event, ...args) {
+            if (this.options && this.options[event]) {
+                this.options[event](...args);
+            }
+        },
+
+        bind: function(elem) {
+            elem.off('click').on('click', this.handle_click.bind(this));
         }
-    });
+    };
+
+    // Selectable items
+    $.fn.selectable = function(options) {
+        var api = new cone.Selectable(options);
+        api.bind(this);
+        this.data('selectable', api);
+        return this;
+    };
 
     // Reference Browser
     $.fn.referencebrowser = function() {
@@ -410,7 +460,7 @@ if (typeof(window['yafowil']) == "undefined") yafowil = {};
             });
         });
         return this;
-    }
+    };
 
     // extend yafowil by reference browser widget.
     $.extend(yafowil, {

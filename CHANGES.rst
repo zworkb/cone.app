@@ -1,8 +1,64 @@
 Changes
 =======
 
-1.0rc1 (unreleased)
+1.0rc2 (unreleased)
 -------------------
+
+- No changes yet.
+
+
+1.0rc1 (2020-07-09)
+-------------------
+
+- Implement ``__copy__`` and ``__deepcopy__`` on ``Properties``,
+  ``ProtectedProperties``, ``XMLProperties`` and ``ConfigProperties`` in
+  ``cone.app.model``.
+  [rnix, 2020-06-30]
+
+- Overhaul copy support. ``paste`` action triggers ``contextchanged`` event to
+  ``#layout`` instead of ``.contextsensitiv`` selector. Paste action considers
+  ``action_paste_tile`` model property for customizing rerendering after paste.
+  Move JS copysupport logic from ``cone.copysupportbinder`` to
+  ``cone.CopySupport``. Do not unselect items if mouse click outside selectable
+  listing. Preselect items on page and tile load.
+  [rnix, 2020-06-28]
+
+- Rename JS ``cone.selectable`` to ``cone.Selectable``. It is now a class and
+  each selectable listing gets it's own instance. No longer automatically binds
+  to table with selectable rows.
+  [rnix, 2020-06-28]
+
+- Do not check 'delete' permission on parent node in
+  ``cona.app.browser.actions.ActionDelete.display``.
+  [rnix, 2020-06-27]
+
+- Add ``ProtectedContentTile.content_permission``. If this permission is not
+  granted on model node, ``insufficient_privileges`` tile gets rendered.
+  [rnix, 2020-06-25]
+
+- Remove ``cone.app.security.DEFAULT_NODE_PROPERTY_PERMISSIONS``.
+  [rnix, 2020-06-25]
+
+- Fix CSS for selected items in dropdown menues.
+  [rnix, 2020-06-25]
+
+- Improve layout configuration handling. Rename ``cone.app.interfaces.ILayout``
+  to ``cone.app.interfaces.ILayoutConfig`` and ``cone.app.model.Layout`` to
+  ``cone.app.model.LayoutConfig``. Remove ``layout`` property from application
+  model. Introduce ``cone.app.layout_config`` decorator which is used to register
+  concrete ``LayoutConfig`` implementations for model nodes.
+  [rnix, 2020-06-22]
+
+- Fix asking for interface implementations via ``Interface.providedBy`` on
+  subclasses of ``cone.app.model.Properties``.
+  [rnix, 2020-06-22]
+
+- Fix workflow state styles if no transitions are available.
+  [rnix, 2020-06-15]
+
+- Introduce ``cone.app.workflow.lookup_workflow`` and use it internally to get
+  workflow. Fixes issue with interface bound workflows.
+  [rnix, 2020-06-15]
 
 - Fix principal name displaying. Fall back to principal id if configured display
   name attribute returns empty value.
