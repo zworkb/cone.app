@@ -1,10 +1,31 @@
 Changes
 =======
 
-1.0rc2 (unreleased)
+1.0rc4 (unreleased)
 -------------------
 
 - No changes yet.
+
+
+1.0rc3 (2020-10-12)
+-------------------
+
+- ``cone.app.browser.ajax.AjaxEvent`` supports optional ``data`` argument
+  supported as of ``bdajax`` 1.13.
+  [rnix, 2020-09-29]
+
+
+1.0rc2 (2020-08-12)
+-------------------
+
+- Fix print CSS.
+  [rnix, 2020-08-12]
+
+- Fix case when pasting to empty folder in copysupport JS.
+  [rnix, 2020-08-12]
+
+- Remove ``col-xs-4`` CSS class from ``h4`` headings in panel headers.
+  [rnix, 2020-08-12]
 
 
 1.0rc1 (2020-07-09)
