@@ -2,6 +2,8 @@ import json
 
 import requests
 
+from node.ext.ugm.interfaces import IAuthenticator
+
 # TODO: key is hardcoded now, must be fetched from config
 FIREBASE_WEB_API_KEY = "AIzaSyDqQThSScLrwBybYW5m22rZSYILELPsDz8"
 rest_api_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
@@ -23,3 +25,6 @@ def sign_in_with_email_and_password(email: str, password: str, return_secure_tok
                       data=payload)
 
     return r.json()
+
+class FirebaseAuthenticator(IAuthenticator):
+    ...
