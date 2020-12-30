@@ -1,5 +1,6 @@
 from cone.app.interfaces import IOwnerSupport
 from cone.app.interfaces import IPrincipalACL
+from node.ext.ugm.interfaces import IAuthenticator
 from cone.app.ugm import ugm_backend
 from plumber import Behavior
 from plumber import default
@@ -12,6 +13,7 @@ from pyramid.security import Everyone
 from pyramid.security import remember
 from pyramid.threadlocal import get_current_request
 from zope.interface import implementer
+from zope import component
 import logging
 
 
@@ -82,8 +84,11 @@ def authenticate(request, login, password):
         if login == ADMIN_USER and password == ADMIN_PASSWORD:
             return remember(request, login)
     ugm = ugm_backend.ugm
+    auth_adapter = component.queryAdapter(ugm.users, IAuthenticator)
+    auth = auth_adapter if auth_adapter else ugm.users
+
     try:
-        if ugm.users.authenticate(login, password):
+        if auth.authenticate(login, password):
             id = ugm.users.id_for_login(login)
             return remember(request, id)
     except Exception as e:
