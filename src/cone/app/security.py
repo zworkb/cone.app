@@ -84,6 +84,10 @@ def authenticate(request, login, password):
         if login == ADMIN_USER and password == ADMIN_PASSWORD:
             return remember(request, login)
     ugm = ugm_backend.ugm
+
+    # TODO: use named utility here and delegate to local auth when remote auth does not work
+    # TODO: implicitly create user here and not in the authenticator
+    # TODO: fetch name of authentication utility from request (login form)
     auth_adapter = component.queryAdapter(ugm.users, IAuthenticator)
     auth = auth_adapter if auth_adapter else ugm.users
 

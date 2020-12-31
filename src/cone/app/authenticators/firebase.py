@@ -8,7 +8,7 @@ from node.ext.ugm.interfaces import IAuthenticator
 REST_API_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
 
 
-def sign_in_with_email_and_password(email: str, password: str, api_key, return_secure_token: bool = True):
+def sign_in_with_email_and_password(email, password, api_key, return_secure_token = True):
     """
     https://github.com/billydh/python-firebase-admin-sdk-demo/blob/master/sign_in_with_email_and_password.py
     """
@@ -37,12 +37,15 @@ class FirebaseAuthenticator:
         checks if the uid exists in self.users, if not it creates the user there
         when fb login is unsuccessful delegates it to
         """
+
+        # TODO: delegation should take pace in security.authenticate
         res = sign_in_with_email_and_password(uid, pwd, self.api_key)
 
         if res.get("kind") == 'identitytoolkit#VerifyPasswordResponse':
             id = res["localId"]
             users = self.users
             if id not in users:
+                # TODO: creation shall take place in security.authenticate()
                 users.create(
                     id,
                     login="email",
