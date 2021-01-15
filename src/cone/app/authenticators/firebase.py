@@ -54,6 +54,8 @@ class FirebaseAuthenticator:
                     registered=res["registered"],
                     idtoken=res["idToken"]
                 )
+            # else:
+            #    user email aktualisieren
 
             user = users[id]
             if hasattr(users, "on_authenticated"):
