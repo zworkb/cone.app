@@ -1,3 +1,5 @@
+import traceback
+
 from cone.app.interfaces import IOwnerSupport
 from cone.app.interfaces import IPrincipalACL
 from node.ext.ugm.interfaces import IAuthenticator
@@ -99,6 +101,7 @@ def authenticate(request, login, password):
         msg = u"Authentication plugin %s raised an Exception while " + \
               u"trying to authenticate: %s"
         msg = msg % (str(ugm.__class__), str(e))
+        traceback.print_exc()
         logger.warning(msg)
 
 
