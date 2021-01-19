@@ -1,6 +1,7 @@
 import json
 
 import requests
+from cone.ugm import logger
 
 from zope.interface import implementer
 from node.ext.ugm.interfaces import IAuthenticator
@@ -13,11 +14,15 @@ def sign_in_with_email_and_password(email, password, api_key, return_secure_toke
     https://github.com/billydh/python-firebase-admin-sdk-demo/blob/master/sign_in_with_email_and_password.py
     """
 
-    payload = json.dumps({
-        "email": email,
-        "password": password,
-        "returnSecureToken": return_secure_token
-    })
+    try:
+        payload = json.dumps({
+            "email": email,
+            "password": password,
+            "returnSecureToken": return_secure_token
+        })
+    except Exception as ex:
+        logger.error(f"error encoding email: {email} and password: {password}")
+        raise
 
     r = requests.post(REST_API_URL,
                       params={"key": api_key},
